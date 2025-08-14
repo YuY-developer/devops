@@ -1,0 +1,427 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: configmap-admin3-ui-server
+  namespace: yuyang
+data:
+  nginx.conf: |
+    user  nginx;
+    worker_processes  auto;
+
+    error_log  /var/log/nginx/error.log warn;
+    pid        /var/run/nginx.pid;
+
+    events {
+        worker_connections  1024;
+        multi_accept on;
+        use epoll;
+    }
+
+    http {
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+
+        log_format json_combined escape=json '{"time_local":"$time_local", "remote_addr":"$remote_addr", "host":"$host", "request":"$request", "status":"$status", "body_bytes_sent":"$body_bytes_sent", "http_referer":"$http_referer", "http_user_agent":"$http_user_agent", "http_x_forwarded_for":"$http_x_forwarded_for", "request_time":"$request_time", "upstream_response_time":"$upstream_response_time", "upstream_addr":"$upstream_addr"}';
+
+        access_log /var/log/nginx/access.log json_combined;
+
+        sendfile        on;
+        tcp_nopush      on;
+        tcp_nodelay     on;
+        keepalive_timeout  65;
+        types_hash_max_size 2048;
+
+        gzip off;
+
+        server {
+            listen       80;
+            server_name  localhost;
+
+            root /app;
+            index index.html index.htm index;
+
+            location = /index.html {
+                add_header Cache-Control "no-store, no-cache, must-revalidate";
+                add_header Pragma "no-cache";
+                expires -1;
+            }
+
+            location ~ /\. {
+                deny all;
+            }
+
+            location ~* \.(?:ico|gif|jpg|jpeg|png|svg|webp|css|js|woff|woff2|ttf|otf|eot|ttc|mp4|webm|ogg|mp3|wav|zip|tar|gz|rar|bz2|7z)$ {
+                expires 30d;
+                access_log off;
+                add_header Cache-Control "public";
+            }
+
+            location ~* \.(?:html|htm)$ {
+                expires 1h;
+                add_header Cache-Control "public";
+            }
+        }
+    }
+
+  application.yaml: |
+    spring:
+      jpa:
+        generate-ddl: true
+        defer-datasource-initialization: true
+        show-sql: true
+        hibernate:
+          ddl-auto: update
+        properties:
+          hibernate.auto_quote_keyword: true
+      application:
+        name: admin3
+      datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://192.168.110.162:3306/admin3?characterEncoding=utf8
+        username: admin
+        password: admin123
+      sql:
+        init:
+          encoding: utf8
+          data-locations: classpath:data.sql
+          mode: always
+          continue-on-error: true
+      data:
+        web:
+          pageable:
+            one-indexed-parameters: true
+      profiles:
+        include: biz
+    server:
+      servlet:
+        context-path: /admin3
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  deployment-admin3-ui
+  namespace: yuyang
+  labels:
+    app:  deployment-admin3-ui
+spec:
+  selector:
+    matchLabels:
+      app: pod-admin3-ui
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  pod-admin3-ui
+    spec:
+      # initContainers:
+        # Init containers are exactly like regular containers, except:
+          # - Init containers always run to completion.
+          # - Each init container must complete successfully before the next one starts.
+      containers:
+      - name:  pod-admin3-ui
+        image:  harbor.labworlds.cc/admin3-ui/master:08131833-yuyang
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+        livenessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        ports:
+        - containerPort:  80
+          name:  http
+        volumeMounts:
+        - name: volume-configmap-admin3-ui-server
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+      volumes:
+        - name: volume-configmap-admin3-ui-server
+          configMap:
+            name: configmap-admin3-ui-server
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: secret-habbor-login
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-admin3-ui
+  namespace: yuyang
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: deployment-admin3-ui
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  deployment-admin3-server
+  namespace: yuyang
+  labels:
+    app:  deployment-admin3-server
+spec:
+  selector:
+    matchLabels:
+      app: pod-admin3-server
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  pod-admin3-server
+    spec:
+      # initContainers:
+        # Init containers are exactly like regular containers, except:
+          # - Init containers always run to completion.
+          # - Each init container must complete successfully before the next one starts.
+      containers:
+      - name:  pod-admin3-server
+        image:  harbor.labworlds.cc/admin3-server/master:08141645-yuyang
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 69
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /admin3/actuator/health
+            port: 8080
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        ports:
+        - containerPort:  8080
+          name:  http
+        volumeMounts:
+        - name: volume-configmap-admin3-ui-server
+          mountPath: /app/application.yml
+          subPath: application.yaml
+      volumes:
+        - name: volume-configmap-admin3-ui-server
+          configMap:
+            name: configmap-admin3-ui-server
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: secret-habbor-login
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-admin3-server
+  namespace: yuyang
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: deployment-admin3-server
+  minReplicas: 1
+  maxReplicas: 3
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 70
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-admin3-ui
+  namespace: yuyang
+spec:
+  selector:
+    app: pod-admin3-ui
+  type: ClusterIP
+  sessionAffinity: None
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  ports:
+  - name: http
+    protocol: TCP
+    port: 80
+    targetPort: 80
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-admin3-server
+  namespace: yuyang
+spec:
+  selector:
+    app: pod-admin3-server
+  type: ClusterIP
+  sessionAffinity: None
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8080
+    targetPort: 8080
+
+---
+# https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-yuyang-admin-labworlds-cc
+  namespace: yuyang
+type: kubernetes.io/tls
+# The TLS secret must contain keys named 'tls.crt' and 'tls.key' that contain the certificate and private key to use for TLS.
+stringData:
+  tls.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIDKTCCAhGgAwIBAgIUUrvEDH5EylgMQIxaBG9Ol01uL7owDQYJKoZIhvcNAQEL
+    BQAwJDEiMCAGA1UEAwwZeXV5YW5nLmFkbWluLmxhYndvcmxkcy5jYzAeFw0yNTA4
+    MDIwODE1NDhaFw0yNjA4MDIwODE1NDhaMCQxIjAgBgNVBAMMGXl1eWFuZy5hZG1p
+    bi5sYWJ3b3JsZHMuY2MwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCe
+    KLpL4dSUFXlCStNNilgRoifmCpED1I5CzKgfp/OY9H2EdLFJC+pxNreTgQlbeNj3
+    XIl3az5bGQV0Ypk4Fofl8jlLIS2XAmW4JjJ5jPu9eJWLh66iSVs2Irc5s80eL0Wn
+    +NOijjsKLq0tS8wCaLD/n/eMQ7Z4oKWdKYzhR7JtJefsJr3gKApGZUQnLBJ/b0i1
+    EI/IoeuZRa8ABi+xKnKTQIxxVvUIpwyeUGnAq7ll1/99lQmtg46UdPhSomynSJ8C
+    93fuU9hBe20lfQwN5y3g4CmNp1BvKNae3/qEGatAL8gWoK2dPYch5riT7BSJO2AY
+    DItkbsZR4rc82nWEn+45AgMBAAGjUzBRMB0GA1UdDgQWBBSfX5Dm/BtSy7hogqaf
+    XcNHJEeO0jAfBgNVHSMEGDAWgBSfX5Dm/BtSy7hogqafXcNHJEeO0jAPBgNVHRMB
+    Af8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQBJ/lwKzn+oiOwDXEHVzR0isKjw
+    2nIkmZxALshX4Xr9baBGBust6DZvcv2q/T0gXezLpkI8EE1rB+a7hZSY0NjPR2xG
+    E4v5x5GDwPOvvgFSYHj43CUkocqEoAPvi9AjGms/fqsS67ErLNSzp6OSdx63T4Ih
+    uvKvmsahYdy1wFm7Pf87qZuzuL2CDOJYAJbY/xAQa5Db67w93hjkxeZJ1nWiVnay
+    p9apvo6yaSe0H3xWCrnwAcQXkLXk0QZMI3+1gzI33hoAFLf3nxLsD5DexcigFjxJ
+    hYunX3w73SspzwmlL20ACsdxQofd1yNWU0C9PjwKyVco0Xy4GvXA/SQwMLo3
+    -----END CERTIFICATE-----
+  tls.key: |
+    -----BEGIN PRIVATE KEY-----
+    MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCeKLpL4dSUFXlC
+    StNNilgRoifmCpED1I5CzKgfp/OY9H2EdLFJC+pxNreTgQlbeNj3XIl3az5bGQV0
+    Ypk4Fofl8jlLIS2XAmW4JjJ5jPu9eJWLh66iSVs2Irc5s80eL0Wn+NOijjsKLq0t
+    S8wCaLD/n/eMQ7Z4oKWdKYzhR7JtJefsJr3gKApGZUQnLBJ/b0i1EI/IoeuZRa8A
+    Bi+xKnKTQIxxVvUIpwyeUGnAq7ll1/99lQmtg46UdPhSomynSJ8C93fuU9hBe20l
+    fQwN5y3g4CmNp1BvKNae3/qEGatAL8gWoK2dPYch5riT7BSJO2AYDItkbsZR4rc8
+    2nWEn+45AgMBAAECggEACPVFmAayg7CzrY2PalTrqBQHLoBqtkzTwfTVkPVyVreC
+    ZH43jGugW8k9nJ0yanvtzhTvtFPetEo2hOEQzJx6FgwiMp8udd8s48FGGpxhpdmu
+    nriQq6B8ChTtS9djRtJmn5z4X7yum2UJagdhBsHnRJNK8ibjrvFqb/xqflgRQx1L
+    sfwVEDnARbp4jJJxV9yDYF0HRvaTxafqMmgLVHc0ql2i9pcg8y5ay7CIuQZpxdFc
+    7L9pq5XY5L3oBG03ThfadUDy0+C2B9snAWfsn1S2fJh7WFz2TH32ezyiki0V9Oco
+    nFo+gE8j5cw8kUc0rcc0KAqB+px7KVRkF2dpbThqAQKBgQDUOFFgMZ7leeGqJw79
+    PVbTC1Ks5Lic5nvwAvDIM17aM9ridhyEt5G/Dno6JBaqEiYBsP8z+waT4GA9q7GX
+    2nbspZFUARnbZriEgNm8keWnfEldixJ/0+Jyae7+vMv6QyYhp4tMJbUK5gOrrzP0
+    69bjPsHXPwJ7FQsjwlfXiBur2wKBgQC+yV21G9veNs7BPSYN7UciBDJTKq4VlDBg
+    e9NafZ7T2bibWFNMS50qqYm+ZpKo91dRyqGHsoV/fYsFhpRvmzjUxXCeE5poZtFV
+    BLY0gFPh446Gbz/xDtfXbzWMaYi3eNKmMRfxSnRVRc8GcbNMgzGYfLG8nuiV3xRx
+    j8kuN/nUewKBgDt2aD62yJnt07A0b3u/gyNxKcIt+BhmcFWozUSbODmVjAAmLgl1
+    0g2hhdfiosMWgLW6nVc4P/iRRwYgpIsy+F2IarcJ8+/I0Wy3Gcs/agTKy1e9jvpo
+    KSv7yK5xwgmmZPnLEznL2vVpy5+AYOOAbV6RCAlCq3RHSi7D1o8aoP4/AoGBALRF
+    hxLLKRy2QvSad+uu6Yi92GN3L5jaNj/koNefXUUmM2Yttj+gLviRy8KqHygi1lJF
+    mg2jZLsLgCIPgRBX5gI+MWRcd4jwphmkYxoGq7wEjbZ/RjbbZJ1+ymVLjtB2DOzV
+    9J6dUIEGflDDfLzuNh20rSjiKjj62dFYIKtYXusjAoGAHAhyWlpnaBj3k5nG0yDd
+    7d3wMxOxU0KYWRWzWPauHitNbFC3BxUXVU8+gEe/JR1DtZ91W2rfgwWPBRz2OG07
+    WPP0cSwI+5C/rWe4MlSp0ecHZ3fw2Kj8raRJ3vWeDAjmts32RqPBSz9RCNxAP00k
+    6fMP9ooQB9lP+6W7nFNiVtY=
+    -----END PRIVATE KEY-----
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-yuyang-admin-labworlds-cc
+  namespace: yuyang
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+      - yuyang.admin.labworlds.cc
+    secretName: secret-yuyang-admin-labworlds-cc
+  rules:
+  - host: yuyang.admin.labworlds.cc
+    http:
+      paths:
+      - path: /admin3
+        pathType: Prefix
+        backend:
+          service:
+            name: service-admin3-server
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: service-admin3-ui
+            port:
+              number: 80
