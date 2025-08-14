@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-yuyang-stars-labworlds-cc
+  namespace: yuyang
+type: kubernetes.io/tls
+stringData:
+  tls.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIDKTCCAhGgAwIBAgIUMiR0vrPAmyQmC6Msc/qPtITail4wDQYJKoZIhvcNAQEL
+    BQAwJDEiMCAGA1UEAwwZeXV5YW5nLXN0YXJzLmxhYndvcmxkcy5jYzAeFw0yNTA4
+    MTMwODU4NDFaFw0yNjA4MTMwODU4NDFaMCQxIjAgBgNVBAMMGXl1eWFuZy1zdGFy
+    cy5sYWJ3b3JsZHMuY2MwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDh
+    JJVt3zmkKVCaKOxImc+ESfduLQr85/88ynteF8Yvfel0oeNGxZYsdRGZeHIZqzcR
+    9KP2X9YBEMeA7K8Y0jaIOmY2nnqFPWImTVkxxfuvjL8j8X0g76/uRBtucSMlwn7Z
+    pVaNOJXiYj+WzUOUyrNf6mn9/LKYlaphfYyLLrLQhGHDQMuKh3RdOOWmneJhpbpY
+    aXc8Uijd12AH2NAOI9tNKJkZg/Ya5NscGnF68OpK4WGIgwh4ws0gKnqbgTmBBoqM
+    K5HpXwRvdBbSndiB24tsYmiSamyjoce+4ym6ypnqVNL2m+jwclKaqtMozHT4skL/
+    rtyNTe07lmUgJaAJKaefAgMBAAGjUzBRMB0GA1UdDgQWBBQLxbaCSS3uyVZanU85
+    74w/0fIldzAfBgNVHSMEGDAWgBQLxbaCSS3uyVZanU8574w/0fIldzAPBgNVHRMB
+    Af8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQBTTEmgbXtdk7lXcfGFVRC5kk/4
+    kOUR7LqNsdvAY34jaAQ9KPab9oGCGtdBkpm/ATwviBeUG71NjpwQvkic4bsh1i47
+    k9ideVp2dYeP8Q1yf14I4PtpAjdfaR9vtTe+fq+3c1TTF4SxwBvDb8nZmePVq1aw
+    3BKzjMNSt2JyH3TGZkkzy+kl459LweoH5QX0dsjkKwqxOUcXym5CCkJOBQKRqiXl
+    H1JSQhU9jvP9z8lEXh4ihXBWGTxP0Ls43rJ+31IOd6AVgK8qavXXDADrx4ugDMlV
+    fh8qGoOszdKXZ+YGrU/0zhNRwFgx2FvT/kv1kQ0D3BNeba4sk0Ju7mzTTWE9
+    -----END CERTIFICATE-----
+  tls.key: |
+    -----BEGIN PRIVATE KEY-----
+    MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDhJJVt3zmkKVCa
+    KOxImc+ESfduLQr85/88ynteF8Yvfel0oeNGxZYsdRGZeHIZqzcR9KP2X9YBEMeA
+    7K8Y0jaIOmY2nnqFPWImTVkxxfuvjL8j8X0g76/uRBtucSMlwn7ZpVaNOJXiYj+W
+    zUOUyrNf6mn9/LKYlaphfYyLLrLQhGHDQMuKh3RdOOWmneJhpbpYaXc8Uijd12AH
+    2NAOI9tNKJkZg/Ya5NscGnF68OpK4WGIgwh4ws0gKnqbgTmBBoqMK5HpXwRvdBbS
+    ndiB24tsYmiSamyjoce+4ym6ypnqVNL2m+jwclKaqtMozHT4skL/rtyNTe07lmUg
+    JaAJKaefAgMBAAECggEAHB3d/X0xrSMtujrfG0f+Jva3zE4av6/Xa8ebtYoBiZ/P
+    Xm3zPLzjPsUWABUPJs5/j6H+MgAQ8UwfpiWozlA+WC/24N5Uzbv3PHJPb8xaXLeW
+    jU4Uwt68GWTvChFeAtKx1ct0rilBaqa7a0FSLcxMr29OclYzFaQnRYqQ2TbpROnv
+    bCjUl2D4h5ZORxCjpyDtA8Feu/eN7ICU1vPRiG6lHIX6jaoXCOftMJZD2r/nmpEL
+    HDVnTW9XJyIizU+0uRddVMJJemS4+oj9VShmbBhFGDLo1YxQg6/Kq/eUeJKu6Wwq
+    VVEwnCTaGPJ/7WgeFscfNnQjmgPenzlgcaFebHtQiQKBgQD5LoYquRurOIdMT5co
+    IESVp5Id8bjDcH9jKj6yql+fBOyt0f+wSpa891vIfJKmbvPPVA82zFm1s9fWy4U6
+    4rFpJp4LtcLQitb/B1p8Wy3lO/OAn+vEjefENp3v6IsjYis1RGmih+GJ2z8ayego
+    FGYIfiT8e+weUDmni4L7xrAYmQKBgQDnTavzXxh+WrOS4owXxSdmArN09mNZoiBR
+    FRHZkd2d4cMuXhhq8QoZb4iMx6NdOhp3UCIydGLRQBX2G7Gs7M7SihUkFyvumk/u
+    xHfn03SbTiHVnonKMbYfwNB281n83s1OA6ku3GA7b+hOktgeEilKZKhKwSc8GDNC
+    g7wtz+jM9wKBgQDD3ypf0vpI8TqJZdbwF81RxlM5bpVKK9g23zJBx2M64OgbCoPu
+    0/MBv39KbYHpijXkt7Lt5FxwVFpJ4dlsnF3QxiZeFhZ5T2oJNoKOVi4Rj7qtVQhD
+    jTiuKDCmMSmOOtC0In7W3/EOKGXGbQgs2TwLWP1B6zeD7JQle6kOuPQboQKBgEEf
+    qU44dBj/SJgOmQsIQ3OBRy2jQY23DApIOGJdo1wUeHPRomZZv1IyCOw6OVDCTzlQ
+    opA6HKh1trk4Suo5MnIs1o72xzPC1saPIoNvEeG4OeZ/YKRBItoF26viEHAV+xAA
+    D95VxfJ2K54T0i2FR4LenFOP1pAg8C3GEXGEnDM5AoGAY5eXc0AQHQTCXYBKaZya
+    uBixKQyFuUL1uH1NK6yqY3Q9bXLpZMmnxKndy6Y00746VaNS7j0v1ooAoYj5jdVq
+    BaWq+a93ZwGEs/CP+d6BEEDVYO3/qxGA5NlcrviAF18GgxMcqHiQrbqS7/xGYh8d
+    DToaRAEjvjZyaMNQNInpQdg=
+    -----END PRIVATE KEY-----
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-yuyang-stars-labworlds-cc
+  namespace: yuyang
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+      - yuyang-stars.labworlds.cc
+    secretName: secret-yuyang-stars-labworlds-cc
+  rules:
+  - host: yuyang-stars.labworlds.cc
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: service-stars-emmision
+            port:
+              number: 80

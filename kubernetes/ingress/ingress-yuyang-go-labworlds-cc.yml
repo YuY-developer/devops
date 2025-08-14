@@ -1,0 +1,85 @@
+# https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-yuyang-go-starter-labworlds-cc
+  namespace: yuyang
+type: kubernetes.io/tls
+# The TLS secret must contain keys named 'tls.crt' and 'tls.key' that contain the certificate and private key to use for TLS.
+stringData:
+  tls.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIDIzCCAgugAwIBAgIUXJWExcVGaKQFRiJJPOvwrhN6KMQwDQYJKoZIhvcNAQEL
+    BQAwITEfMB0GA1UEAwwWeXV5YW5nLmdvLmxhYndvcmxkcy5jYzAeFw0yNTA4MTQw
+    MjA5NTBaFw0yNjA4MTQwMjA5NTBaMCExHzAdBgNVBAMMFnl1eWFuZy5nby5sYWJ3
+    b3JsZHMuY2MwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDskHW7jjw5
+    P+zcoRkIYV78UO8x6hAwmHuA9DDq+DnduhJz8hBT6pwpZRG/k2q/GtCqvyhSFWiP
+    x+zJEPCmL78xbNOcNfpJJDdO8scK3RYqfun0CvUG77jG8owKKyeOSmRC5AL6pUhx
+    OBpYN8737kftH8c5MdPEbZEh+gPEj02tUMZH2aq2Dy+Th34HiJ51OkOCHESjtcCv
+    YBwuiU1Hi+iiNfndy8H2+JhD00n4tgkW25pOpowlfg3SUqCD8Kee/roYxUoD/4ID
+    XgOyxEfqTnKYjZLatPVW7D/+FaRurTaK1XAdkm+UiEuNQ/TWJ7B+XghK00Tee9GH
+    oh/YW8BGKBu7AgMBAAGjUzBRMB0GA1UdDgQWBBSSU2/kc3ziCw7Ia0GRP3Tjr+Hp
+    sTAfBgNVHSMEGDAWgBSSU2/kc3ziCw7Ia0GRP3Tjr+HpsTAPBgNVHRMBAf8EBTAD
+    AQH/MA0GCSqGSIb3DQEBCwUAA4IBAQCBTqz3nDQb0BLQlNOizDfE2dToYhikgcuN
+    M3DZPLkpqjGIvi/gfBIB9L7iUeU2+WPAlm2W1/cIWwM0xW/nAI1juiIy1eSw65Ue
+    MB86/fVIKlvbAqdIMZzOocXhYCWhgn9PkUDfc1L+X6ysByxxLClHBHkgg6edLp/N
+    lGeyadlAxCehNXb9vBrG2hUx4DXAx3J8zV0Lmn2chiD31wTrvji9ttloJKpc8GG8
+    wd3P2Es/nafYJ41LiE4Bz07z28l6+FhufltulxwzW74Jl+Qp9OafFQyXePfoyJz5
+    8EWqh86xSHNSs6nBoRZGgcx04iNxB9EfjsspYIaPkfbcA89ptHbn
+    -----END CERTIFICATE-----
+  tls.key: |
+    -----BEGIN PRIVATE KEY-----
+    MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQDskHW7jjw5P+zc
+    oRkIYV78UO8x6hAwmHuA9DDq+DnduhJz8hBT6pwpZRG/k2q/GtCqvyhSFWiPx+zJ
+    EPCmL78xbNOcNfpJJDdO8scK3RYqfun0CvUG77jG8owKKyeOSmRC5AL6pUhxOBpY
+    N8737kftH8c5MdPEbZEh+gPEj02tUMZH2aq2Dy+Th34HiJ51OkOCHESjtcCvYBwu
+    iU1Hi+iiNfndy8H2+JhD00n4tgkW25pOpowlfg3SUqCD8Kee/roYxUoD/4IDXgOy
+    xEfqTnKYjZLatPVW7D/+FaRurTaK1XAdkm+UiEuNQ/TWJ7B+XghK00Tee9GHoh/Y
+    W8BGKBu7AgMBAAECggEAJsoBJAHMii6bLgoUSrV8l67Fqc+RXAaEqb5gjwaoplyu
+    TeixGLFtbbQu1tTbOf6xnG2/tMXh4UGM5+MpMna9yOLpR8HqCjgwAXf5fySFT+6D
+    egqZ5stD5ws6PyiYUdKM4hL1Ehgr6rSiTTjJbQnbLVx6lDxBVwIIPCP8nixJNlOp
+    m2vR1ZlUF8MRP7v3KsB3xDWdlA1UNHQ1aY5X2wF1IlbiQSI5cIoCv8NAStlI4A6q
+    5ZCX7zlE+swTjefnUp/GrmyWYH2Yiv44U82oAwK/oxdEXGZnTjIF5hz59kdw67XM
+    fiK3rJPykuX87cYFTq/oftgViQansEn081ALxoZVIQKBgQD2OjA2OWaQHQkFlmzc
+    sWhVUx4ew5rzKS+sJfkcv7LfJtNhwxLf5lYTUztm3mIQ+RN9A2nYZTnmxQiFPA0p
+    WBuA2iLLJA67mc/X+qqT7j4rTXKB+2UWsDfTanK5BeF7g1lr08LNMdlHG51bXp0u
+    HXPVKWFAHaWM+QMWbyrcFo3NAwKBgQD19BcClIBeo4oGN1U+Y4ly9LBxZtMvcO3t
+    cT8cWCu/HKpJZLRX06lZfg2eQKUp+CcMqPfduy/l92Uc/xlZ6SR3j3WL855rNF1Z
+    piNtW59j+tlT9x3ZTPTWuln46SrZr4Nx08OVohvoaH1Legsspa+pp7JtKoKuKj2G
+    NlRQU/Qs6QKBgQDIGwAFgV697irf1KFCNheRiEwpOlSaGzW4FOBAIfbvbfFKOSwE
+    tH/tkq3q6v4Nxy60YWrKx3Fn/2buSKB1ojov3Jd8OiCTC+yjHP8129/Ad1+BDVrZ
+    NnsYISF9Bq96HoQ0olNlSYbISEP49oqM6LizWr7DSZS6XcDJoazWUqoJGwKBgQCX
+    1LPzssrAIYLOLZBg8D9kiKr3hntuOO+X+aX1EHUJCGAS6Kjv4skTZt5vSAbtrrQk
+    e5Zv+eMquptf2BbFS0hoylXNLHoqQewysH4EP2BY7v0EeXOitoAaonVyVDZQpamm
+    NgzyLV2/DenzEwcc67dSKyTZgTmk3IyYcqd/4yPEKQKBgCZJCLE/HnjngAWg3/j5
+    2P1VSQ5Wmey8S3jOER2CoKxx9OzICEIEulX1jkb9hS/lPqTbVlemn+HzxEAd2yhM
+    iapGtp2lTs6JIXXPiOjQ/pm0qOROJKMX5BRqhutyrCAVzvD6XhrE7J4ug8eG/1H/
+    VLDBvOUOxlRiNHWblPSN/85O
+    -----END PRIVATE KEY-----
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-yuyang-go-starter-labworlds-cc
+  namespace: yuyang
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+      - yuyang.go.labworlds.cc
+    secretName: yuyang-go-starter-labworlds-cc
+  rules:
+  - host: yuyang.go.labworlds.cc
+    http:
+      paths:
+      - path: /go(/|$)(.*)
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: service-go-starter
+            port:
+              number: 8080

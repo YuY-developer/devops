@@ -1,0 +1,67 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: configmap-admin3-ui
+  namespace: yuyang
+data:
+  nginx.conf: |
+    user  nginx;
+    worker_processes  auto;
+
+    error_log  /var/log/nginx/error.log warn;
+    pid        /var/run/nginx.pid;
+
+    events {
+        worker_connections  1024;
+        multi_accept on;
+        use epoll;
+    }
+
+    http {
+        include       /etc/nginx/mime.types;
+        default_type  application/octet-stream;
+
+        log_format json_combined escape=json '{"time_local":"$time_local", "remote_addr":"$remote_addr", "host":"$host", "request":"$request", "status":"$status", "body_bytes_sent":"$body_bytes_sent", "http_referer":"$http_referer", "http_user_agent":"$http_user_agent", "http_x_forwarded_for":"$http_x_forwarded_for", "request_time":"$request_time", "upstream_response_time":"$upstream_response_time", "upstream_addr":"$upstream_addr"}';
+
+        access_log /var/log/nginx/access.log json_combined;
+
+        sendfile        on;
+        tcp_nopush      on;
+        tcp_nodelay     on;
+        keepalive_timeout  65;
+        types_hash_max_size 2048;
+
+        gzip off;
+
+        server {
+            listen       80;
+            server_name  localhost;
+
+            root /app;
+            index index.html index.htm index;
+
+            location = /index.html {
+                add_header Cache-Control "no-store, no-cache, must-revalidate";
+                add_header Pragma "no-cache";
+                expires -1;
+            }
+
+            location ~ /\. {
+                deny all;
+            }
+
+            location ~* \.(?:ico|gif|jpg|jpeg|png|svg|webp|css|js|woff|woff2|ttf|otf|eot|ttc|mp4|webm|ogg|mp3|wav|zip|tar|gz|rar|bz2|7z)$ {
+                expires 30d;
+                access_log off;
+                add_header Cache-Control "public";
+            }
+
+            location ~* \.(?:html|htm)$ {
+                expires 1h;
+                add_header Cache-Control "public";
+            }
+        }
+    }
+  
+  env: |
+    VITE_BASE_URI=https://service-admin3-server:8080/admin3

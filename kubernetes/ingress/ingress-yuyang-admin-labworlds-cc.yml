@@ -1,0 +1,90 @@
+# https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-yuyang-admin-labworlds-cc
+  namespace: yuyang
+type: kubernetes.io/tls
+# The TLS secret must contain keys named 'tls.crt' and 'tls.key' that contain the certificate and private key to use for TLS.
+stringData:
+  tls.crt: |
+    -----BEGIN CERTIFICATE-----
+    MIIDKTCCAhGgAwIBAgIUUrvEDH5EylgMQIxaBG9Ol01uL7owDQYJKoZIhvcNAQEL
+    BQAwJDEiMCAGA1UEAwwZeXV5YW5nLmFkbWluLmxhYndvcmxkcy5jYzAeFw0yNTA4
+    MDIwODE1NDhaFw0yNjA4MDIwODE1NDhaMCQxIjAgBgNVBAMMGXl1eWFuZy5hZG1p
+    bi5sYWJ3b3JsZHMuY2MwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQCe
+    KLpL4dSUFXlCStNNilgRoifmCpED1I5CzKgfp/OY9H2EdLFJC+pxNreTgQlbeNj3
+    XIl3az5bGQV0Ypk4Fofl8jlLIS2XAmW4JjJ5jPu9eJWLh66iSVs2Irc5s80eL0Wn
+    +NOijjsKLq0tS8wCaLD/n/eMQ7Z4oKWdKYzhR7JtJefsJr3gKApGZUQnLBJ/b0i1
+    EI/IoeuZRa8ABi+xKnKTQIxxVvUIpwyeUGnAq7ll1/99lQmtg46UdPhSomynSJ8C
+    93fuU9hBe20lfQwN5y3g4CmNp1BvKNae3/qEGatAL8gWoK2dPYch5riT7BSJO2AY
+    DItkbsZR4rc82nWEn+45AgMBAAGjUzBRMB0GA1UdDgQWBBSfX5Dm/BtSy7hogqaf
+    XcNHJEeO0jAfBgNVHSMEGDAWgBSfX5Dm/BtSy7hogqafXcNHJEeO0jAPBgNVHRMB
+    Af8EBTADAQH/MA0GCSqGSIb3DQEBCwUAA4IBAQBJ/lwKzn+oiOwDXEHVzR0isKjw
+    2nIkmZxALshX4Xr9baBGBust6DZvcv2q/T0gXezLpkI8EE1rB+a7hZSY0NjPR2xG
+    E4v5x5GDwPOvvgFSYHj43CUkocqEoAPvi9AjGms/fqsS67ErLNSzp6OSdx63T4Ih
+    uvKvmsahYdy1wFm7Pf87qZuzuL2CDOJYAJbY/xAQa5Db67w93hjkxeZJ1nWiVnay
+    p9apvo6yaSe0H3xWCrnwAcQXkLXk0QZMI3+1gzI33hoAFLf3nxLsD5DexcigFjxJ
+    hYunX3w73SspzwmlL20ACsdxQofd1yNWU0C9PjwKyVco0Xy4GvXA/SQwMLo3
+    -----END CERTIFICATE-----
+  tls.key: |
+    -----BEGIN PRIVATE KEY-----
+    MIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCeKLpL4dSUFXlC
+    StNNilgRoifmCpED1I5CzKgfp/OY9H2EdLFJC+pxNreTgQlbeNj3XIl3az5bGQV0
+    Ypk4Fofl8jlLIS2XAmW4JjJ5jPu9eJWLh66iSVs2Irc5s80eL0Wn+NOijjsKLq0t
+    S8wCaLD/n/eMQ7Z4oKWdKYzhR7JtJefsJr3gKApGZUQnLBJ/b0i1EI/IoeuZRa8A
+    Bi+xKnKTQIxxVvUIpwyeUGnAq7ll1/99lQmtg46UdPhSomynSJ8C93fuU9hBe20l
+    fQwN5y3g4CmNp1BvKNae3/qEGatAL8gWoK2dPYch5riT7BSJO2AYDItkbsZR4rc8
+    2nWEn+45AgMBAAECggEACPVFmAayg7CzrY2PalTrqBQHLoBqtkzTwfTVkPVyVreC
+    ZH43jGugW8k9nJ0yanvtzhTvtFPetEo2hOEQzJx6FgwiMp8udd8s48FGGpxhpdmu
+    nriQq6B8ChTtS9djRtJmn5z4X7yum2UJagdhBsHnRJNK8ibjrvFqb/xqflgRQx1L
+    sfwVEDnARbp4jJJxV9yDYF0HRvaTxafqMmgLVHc0ql2i9pcg8y5ay7CIuQZpxdFc
+    7L9pq5XY5L3oBG03ThfadUDy0+C2B9snAWfsn1S2fJh7WFz2TH32ezyiki0V9Oco
+    nFo+gE8j5cw8kUc0rcc0KAqB+px7KVRkF2dpbThqAQKBgQDUOFFgMZ7leeGqJw79
+    PVbTC1Ks5Lic5nvwAvDIM17aM9ridhyEt5G/Dno6JBaqEiYBsP8z+waT4GA9q7GX
+    2nbspZFUARnbZriEgNm8keWnfEldixJ/0+Jyae7+vMv6QyYhp4tMJbUK5gOrrzP0
+    69bjPsHXPwJ7FQsjwlfXiBur2wKBgQC+yV21G9veNs7BPSYN7UciBDJTKq4VlDBg
+    e9NafZ7T2bibWFNMS50qqYm+ZpKo91dRyqGHsoV/fYsFhpRvmzjUxXCeE5poZtFV
+    BLY0gFPh446Gbz/xDtfXbzWMaYi3eNKmMRfxSnRVRc8GcbNMgzGYfLG8nuiV3xRx
+    j8kuN/nUewKBgDt2aD62yJnt07A0b3u/gyNxKcIt+BhmcFWozUSbODmVjAAmLgl1
+    0g2hhdfiosMWgLW6nVc4P/iRRwYgpIsy+F2IarcJ8+/I0Wy3Gcs/agTKy1e9jvpo
+    KSv7yK5xwgmmZPnLEznL2vVpy5+AYOOAbV6RCAlCq3RHSi7D1o8aoP4/AoGBALRF
+    hxLLKRy2QvSad+uu6Yi92GN3L5jaNj/koNefXUUmM2Yttj+gLviRy8KqHygi1lJF
+    mg2jZLsLgCIPgRBX5gI+MWRcd4jwphmkYxoGq7wEjbZ/RjbbZJ1+ymVLjtB2DOzV
+    9J6dUIEGflDDfLzuNh20rSjiKjj62dFYIKtYXusjAoGAHAhyWlpnaBj3k5nG0yDd
+    7d3wMxOxU0KYWRWzWPauHitNbFC3BxUXVU8+gEe/JR1DtZ91W2rfgwWPBRz2OG07
+    WPP0cSwI+5C/rWe4MlSp0ecHZ3fw2Kj8raRJ3vWeDAjmts32RqPBSz9RCNxAP00k
+    6fMP9ooQB9lP+6W7nFNiVtY=
+    -----END PRIVATE KEY-----
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ingress-yuyang-admin-labworlds-cc
+  namespace: yuyang
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+      - yuyang.admin.labworlds.cc
+    secretName: secret-yuyang-admin-labworlds-cc
+  rules:
+  - host: yuyang.admin.labworlds.cc
+    http:
+      paths:
+      - path: /admin3
+        pathType: Prefix
+        backend:
+          service:
+            name: servcie-admin3-server
+            port:
+              number: 8080
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: service-admin3-ui
+            port:
+              number: 80

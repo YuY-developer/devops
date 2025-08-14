@@ -1,0 +1,108 @@
+def getBuildTag() {
+    return new Date().format("MMddHHmmss") + "-${env.BUILD_ID}"
+}
+
+def project_name = "go-starter"
+def harbbor = "harbor.labworlds.cc"
+def stage_num = "0"  // 改为全局变量控制阶段逻辑
+def new_tag = getBuildTag()  // 全局使用的新 tag
+
+properties([
+    parameters([
+        booleanParam(name: "rendering", defaultValue: false, description: "是否渲染页面"),
+        choice(name: "deploy_type", choices: ["branch", "tag", "image", "restart"], description: "请选择发布类型"),
+        string(name: "deploy_parameter", defaultValue: "", description: "请输入发布类型对应的参数", trim: true),
+        extendedChoice(name: "hosts", type: "PT_CHECKBOX", value: "192.168.110.137,192.168.110.135", description: "请选择主机"),
+        string(name: "docker_run", defaultValue: "docker run -d -p 9006:8080 --restart=always", description: "请输入Docker启动命令"),
+    ])
+])
+
+pipeline {
+    agent { node 'node-192.168.110.135-yuyang' }
+
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '30'))
+        disableConcurrentBuilds()
+        ansiColor('xterm')
+    }
+
+    stages {
+        stage("Git Clone") {
+            when {
+                expression {
+                    return params.rendering == false && 
+                           (params.deploy_type == "branch" || params.deploy_type == "tag")
+                }
+            }
+            steps {
+                script {
+                    if (params.deploy_type == "tag") {
+                        checkout([
+                            $class: "GitSCM",
+                            branches: [[name: "refs/tags/${params.deploy_parameter}"]],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [],
+                            userRemoteConfigs: [[
+                                credentialsId: "35ebb72b-6295-42a1-9360-087602619e1b",
+                                url: "git@gitee.com:Y_Yll/go-starter.git"
+                            ]]
+                        ])
+                    } else {
+                        git credentialsId: "35ebb72b-6295-42a1-9360-087602619e1b", 
+                            url: "git@gitee.com:Y_Yll/go-starter.git", 
+                            branch: "${params.deploy_parameter}"
+                    }
+                    stage_num = "1"
+                }
+            }
+        }
+
+        stage("Build Image") {
+            when {
+                expression {
+                    return stage_num == "1" && params.rendering == false &&
+                           (params.deploy_type == "branch" || params.deploy_type == "tag")
+                }
+            }
+            steps {
+                script {
+                    def docker_image_name = "${harbbor}/${project_name}/${params.deploy_parameter}:${new_tag}"
+                    sh "docker build -t ${docker_image_name} ."
+                    sh "docker push ${docker_image_name}"
+                    sh "docker rmi ${docker_image_name}"
+                    stage_num = "2"
+                }
+            }
+        }
+
+        stage("Deploy") {
+            when {
+                expression {
+                    return params.rendering == false &&
+                           (params.deploy_type == "restart" || stage_num == "2")
+                }
+            }
+            steps {
+                script {
+                    def command = "python3 /home/ubuntu/PyDockerDeploy/deployer.py"
+                    command += " -p '${project_name}'"
+
+                    if (params.deploy_type == "branch") {
+                        command += " --git_branch '${params.deploy_parameter}'"
+                    } else if (params.deploy_type == "tag") {
+                        command += " --image_tag '${params.deploy_parameter}'"
+                    } else if (params.deploy_type == "image") {
+                        command += " --image '${params.deploy_parameter}'"
+                    }
+
+                    command += " --hosts '${params.hosts}'"
+                    command += " --harbor_registry '${harbbor}'"
+                    command += " --docker_run '${params.docker_run}'"
+
+                    echo "执行部署命令：${command}"
+                    sh command
+                }
+            }
+        }
+    }
+}

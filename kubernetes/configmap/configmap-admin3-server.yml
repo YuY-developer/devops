@@ -1,0 +1,43 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: configmap-admin3-server
+  namespace: yuyang
+data:
+  application.yaml: |
+    spring:
+      jpa:
+        generate-ddl: true
+        defer-datasource-initialization: true
+        show-sql: true
+        hibernate:
+          ddl-auto: update
+        properties:
+          hibernate.auto_quote_keyword: true
+      application:
+        name: admin3
+      datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://192.168.110.167:3306/admin3?characterEncoding=utf8
+        username: admin
+        password: admin123
+      sql:
+        init:
+          encoding: utf8
+          data-locations: classpath:data.sql
+          mode: always
+          continue-on-error: true
+      data:
+        web:
+          pageable:
+            one-indexed-parameters: true
+      profiles:
+        include: biz
+    server:
+      servlet:
+        context-path: /admin3
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health

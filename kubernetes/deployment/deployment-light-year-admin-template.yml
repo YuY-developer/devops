@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  light-year-admin-template
+  namespace: yuyang
+  labels:
+    app:  light-year-admin-template
+spec:
+  selector:
+    matchLabels:
+      app: light-year-admin-template
+  replicas: 2
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 0%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  light-year-admin-template
+    spec:
+      # initContainers:
+        # Init containers are exactly like regular containers, except:
+          # - Init containers always run to completion.
+          # - Each init container must complete successfully before the next one starts.
+      containers:
+      - name:  light-year-admin-template
+        image:  harbor.labworlds.cc/light-year-admin-template/master:08121528-yuyang
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+        livenessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        ports:
+        - containerPort:  80
+          name: http
+        - containerPort: 443
+          name: https
+        volumeMounts:
+        - name: volume-configmap-app-file
+          mountPath: /etc/nginx/nginx.conf
+          subPath: nginx.conf
+        - name: volume-secret-admin-yuyang-com
+          mountPath: /etc/nginx/ssl/admin.yuyang.com/certificate.crt
+          subPath: tls.crt
+        - name: volume-secret-admin-yuyang-com
+          mountPath: /etc/nginx/ssl/admin.yuyang.com/private.key
+          subPath: tls.key
+      volumes:
+        - name: volume-configmap-app-file
+          configMap:
+            name: configmap-app-file
+        - name: volume-secret-admin-yuyang-com
+          secret:
+            secretName: secret-admin-yuyang-com
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: secret-harbor-login

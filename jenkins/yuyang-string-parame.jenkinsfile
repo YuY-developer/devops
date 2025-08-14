@@ -1,0 +1,57 @@
+properties([
+    parameters([
+        booleanParam(name: "release", defaultValue: false, description: "请选择是否发布"),
+        string(name: "str", defaultValue: "1111", description: "请输入一个值", trim: true),
+        password(name: "pwd", defaultValue: "admin123", description: "请输入密码"),
+        hidden(name: "branch", defaultValue: "master", description: "请输入分支", trim: true),
+        // choice(name: "branch2", choices: ["prod", "test", "dev"], description: "请选择分支"),
+        // extendedChoice(name: "hosts", type: 'PT_MULTI_SELECT' ,value: "192.168.110.137,192.168.110.135", description: "请选择主机"),
+        choice(name: "env", choices: ["", "prod", "test"], description: "请选择环境"),
+        [
+            $class: "CascadeChoiceParameter",
+            name: "hosts",
+            referencedParameters: "env",
+            choiceType: "PT_CHECKBOX",
+            script: [
+                $class: "GroovyScript",
+                fallbackScript: [classpath: [], sandbox: true, script: 'return ["请选择环境"]'],
+                script: [
+                    classpath: [],
+                    sandbox: true,
+                    script: """
+                        if (env == 'prod') {
+                            return ['192.168.110.137', '192.168.110.135']
+                        } else if (env == 'test') {
+                            return ['192.168.110.137', '192.168.110.77', '192.168.110.153']
+                        } else {
+                            return ['请选择环境']
+                        }
+                    """
+                ]
+            ],
+            description: "请选择主机"
+        ],
+        text(name: "application", defaultValue: """
+            jsidjfaio
+        """, description: "请输入配置", trim: true)
+    ])
+])
+pipeline {
+    agent any
+    stages {
+        stage("print") {
+            when {
+                expression { params.release == true }
+            }
+            steps {
+                echo "Boolean 参数值为：${params.release}"
+                echo "String 参数值为：${params.str}"
+                echo "Password 参数值为：${params.pwd}"
+                echo "Hidden 参数值为：${params.branch}"
+                echo "Choice 参数值为：${params.branch2}"
+                echo "Exetend 参数为: ${params.hosts}"
+                echo "Txt 参数值为：${params.application}"
+            }
+        }
+    }
+}

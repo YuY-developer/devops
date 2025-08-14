@@ -1,0 +1,166 @@
+properties ([
+    parameters ([
+        booleanParam(name: "release", defaultValue: false, description: "是否发布"),
+        hidden(name: "harbbor", defaultValue: "harbor.labworlds.cc", description: "私库域名"),
+        hidden(name: "ui-name", defaultValue: "admin3-ui", description: "服务名称"),
+        string(name: "branch", defaultValue: "master", description: "选择分支"),
+        string(name: "tag", defaultValue: "yuyang-v1.0", description: "选择版本"),
+        extendedChoice(name: "hosts", type: "PT_CHECKBOX", value: "192.168.110.135,192.168.110.137", description: "请选择主机"),
+        text(name: "run-command", defaultValue: 
+"""
+docker run -d -p 8000:80
+""", description: "请输入启动命令"),
+        text(name: "nginx-config", defaultValue: """
+            user  nginx;
+            worker_processes  auto;
+
+            error_log  /var/log/nginx/error.log warn;
+            pid        /var/run/nginx.pid;
+
+            events {
+                worker_connections  1024;
+                multi_accept on;
+                use epoll;
+            }
+
+            http {
+                include       /etc/nginx/mime.types;
+                default_type  application/octet-stream;
+
+                # 定义JSON格式的日志
+                log_format json_combined escape=json '{"time_local":"\$time_local", "remote_addr":"\$remote_addr", "host":"\$host", "request":"\$request", "status":"\$status", "body_bytes_sent":"\$body_bytes_sent", "http_referer":"\$http_referer", "http_user_agent":"\$http_user_agent", "http_x_forwarded_for":"\$http_x_forwarded_for", "request_time":"\$request_time", "upstream_response_time":"\$upstream_response_time", "upstream_addr":"\$upstream_addr"}';
+
+                access_log /var/log/nginx/access.log json_combined;
+
+                sendfile        on;
+                tcp_nopush      on;
+                tcp_nodelay     on;
+                keepalive_timeout  65;
+                types_hash_max_size 2048;
+
+                # Gzip 压缩配置 - 为了更好的前端性能，建议开启
+                gzip on;
+                gzip_min_length 1k;
+                gzip_comp_level 6;
+                gzip_types text/plain text/css text/javascript application/json application/javascript application/x-javascript application/xml application/xml+rss;
+                gzip_vary on;
+                gzip_disable "MSIE [1-6]\\.";
+
+                server {
+                    listen       80;
+                    server_name  localhost;
+
+                    # Vue 项目构建后的目录
+                    root /app;
+                    index index.html;
+
+                    # 支持 Vue Router 的 history 模式
+                    location / {
+                        try_files \\\$uri \\\$uri/ /index.html;
+                        add_header Cache-Control "no-store, no-cache, must-revalidate";
+                    }
+
+                    # 禁止缓存 index.html
+                    location = /index.html {
+                        add_header Cache-Control "no-store, no-cache, must-revalidate";
+                        add_header Pragma "no-cache";
+                        expires -1;
+                    }
+
+                    # 禁止访问隐藏文件
+                    location ~ /\\. {
+                        deny all;
+                    }
+
+                    # 静态资源缓存配置
+                    # Vue CLI 构建后的文件会带有 hash，所以可以设置较长的缓存时间
+                    location /assets {
+                        expires 1y;
+                        add_header Cache-Control "public";
+                        access_log off;
+                    }
+
+                    # 针对常见静态文件的缓存配置
+                    location ~* \\.(?:ico|gif|jpg|jpeg|png|svg|webp|css|js|woff|woff2|ttf|otf|eot|ttc)\$ {
+                        expires 30d;
+                        access_log off;
+                        add_header Cache-Control "public";
+                    }
+
+                }
+            }
+        """, description: "请输入nginx配置", trim: true),
+        hidden(name: "server-name", defaultValue: "admin3-server", description: "后端服务名"),
+        string(name: "server-branch", defaultValue: "master", description: "后端服务分支"),
+        string(name: "server-tag", defaultValue: "yuyang-v1.0", description: "后端服务版本"),
+        extendedChoice(name: "server-hosts", type: "PT_CHECKBOX", value: "192.168.110.135,192.168.110.137", description: "请选择主机"),
+        text(name: "server-run", defaultValue: """
+            docker run -d -p 8080:8080 -v /opt/admin3-server/application.yml:/app/application.yml
+        """, description: "后端服务启动命令"),
+        text(name: "servre-application", defaultValue: """
+            spring:
+                jpa:
+                    generate-ddl: true
+                    defer-datasource-initialization: true
+                    show-sql: true
+                    hibernate:
+                    ddl-auto: update
+                    properties:
+                    hibernate.auto_quote_keyword: true
+
+                application:
+                    name: admin3
+
+                datasource:
+                    driver-class-name: com.mysql.cj.jdbc.Driver
+                    url: jdbc:mysql://192.168.110.163:3306/admin3?characterEncoding=utf8
+                    username: admin
+                    password: admin123
+
+                sql:
+                    init:
+                    encoding: utf8
+                    data-locations: classpath:data.sql
+                    mode: always
+                    continue-on-error: true
+
+                data:
+                    web:
+                    pageable:
+                        one-indexed-parameters: true
+
+                profiles:
+                    include: biz
+
+                server:
+                servlet:
+                    context-path: /admin3
+        """, description: "服务配置", trim: true)
+    ])
+])
+pipeline {
+    agent any
+    stages {
+        stage("前端发布") {
+            steps {
+                echo("${params.harbbor}")
+                echo("${params.ui-name}")
+                echo("${params.branch}")
+                echo("${params.tag}")
+                echo("${params.hosts}")
+                echo("${params.run-command}")
+                echo("${params.nginx-config}")
+            }
+        }
+        stage("后端发布") {
+            steps {
+                echo("${params.server-name}")
+                echo("${params.server-branch}")
+                echo("${params.server-tag}")
+                echo("${params.server-hosts}")
+                echo("${params.server-run}")
+                echo("${params.servre-application}")
+            }
+        }
+    }
+}

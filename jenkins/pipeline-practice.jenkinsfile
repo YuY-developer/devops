@@ -1,0 +1,55 @@
+// 定义一个函数，返回当前时间加构建编号的标签
+def getBuildTag() {
+    return new Date().format('MMddHH') + "-${env.BUILD_ID}"
+}
+
+// 自定义变量（不要放在 pipeline 内部）
+def script_tag = false
+
+properties ([
+    parameters ([
+        booleanParam(name: "build", defaultValue: false, description: "是否发布")
+    ])
+])
+
+pipeline {
+    agent { node 'node-192.168.110.135-yuyang' }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '5'))
+        timeout(time: 3, unit: 'MINUTES')
+    }
+    environment {
+        images_tag = getBuildTag()
+    }
+    stages {
+        stage('node') {
+            steps {
+                echo "节点：${env.NODE_NAME}"
+            }
+        }
+        stage("option") {
+            when {
+                expression {params.build == true}
+            }
+            steps {
+                echo("版本：${env.images_tag}")
+                script {
+                    echo("环境变量赋值")
+                    script_tag = 'true'
+                }
+            }
+        }
+        stage("script") {
+            steps {
+                script {
+                    echo("script_tag = ${script_tag}")
+                    if (script_tag == 'true') {
+                        echo("构建ID：${env.BUILD_ID}")
+                    } else {
+                        echo("构建工作目录：${env.WORKSPACE}")
+                    }
+                }
+            }
+        }
+    }
+}

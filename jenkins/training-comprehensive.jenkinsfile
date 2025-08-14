@@ -1,0 +1,91 @@
+// Docker 镜像标签，按照时间-构建编号命名
+def getBuildTag() {
+    return new Date().format('MMddHH') + "-${env.BUILD_ID}"
+}
+
+properties([
+    parameters([
+        booleanParam(name: 'rendering', defaultValue: false, description: '是否要渲染页面'),
+        string(name: 'git_branch', defaultValue: 'master', description: '请输入代码分支', trim: true),
+        string(name: 'git_tag', defaultValue: '', description: '请输入代码TAG', trim: true),
+        string(name: 'image', defaultValue: '', description: '请输入完整的镜像地址', trim: true),
+        hidden(name: 'project_name', defaultValue: 'go-starter', description: '隐藏参数不给修改'),
+        string(name: "buildVersion" ,defaultValue: "", description: "请输入版本", trim: true),
+        extendedChoice(
+            name: 'hosts', 
+            type: 'PT_CHECKBOX', 
+            value: '192.168.110.137,192.168.110.135', 
+            description: '请选择主机',
+            multiSelectDelimiter: ','
+        ),
+        string(name: 'docker_run', defaultValue: 'docker run -d -p 9006:8080 --restart=always', description: '请输入Docker运行命令', trim: true),
+    ])
+])
+
+pipeline {
+    agent { node 'node-192.168.110.135-yuyang' }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '30'))
+        ansiColor('xterm')
+    }
+    environment {
+        image_tag = getBuildTag()
+        branch = ""
+    }
+    stages {
+        stage('Git Clone') {
+            when {
+                expression { params.rendering == false && (params.git_branch != "" || params.git_tag != "") }
+            }
+            steps {
+                script {
+                    if (params.git_tag != "") {
+                        checkout([$class: 'GitSCM',
+                            branches: [[name: "refs/tags/${params.git_tag}"]],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [],
+                            userRemoteConfigs: [[
+                                credentialsId: 'c4b7f929-0269-4967-b9e3-7d462db21aca',
+                                url: 'git@gitee.com:Tender-Liu/go-starter.git'
+                            ]]
+                        ])
+                        branch = params.git_tag
+                        echo "已克隆 TAG：${params.git_tag}，分支设置为：${branch}"
+                    } else {
+                        git branch: params.git_branch, credentialsId: 'c4b7f929-0269-4967-b9e3-7d462db21aca', url: 'git@gitee.com:Tender-Liu/go-starter.git'
+                        branch = params.git_branch
+                        echo "已克隆分支：${params.git_branch}，分支设置为：${branch}"
+                    }
+                }
+            }
+        }
+        stage('Print String Param') {
+            when {
+                expression { params.rendering == false }
+            }
+            steps {
+                echo "当前项目：${params.project_name}"
+                echo "构建标签：${image_tag}"
+                sh "ifconfig"
+                sh "hostname"
+            }
+        }
+        stage('Summary') {
+            steps {
+                echo "任务总结：构建完成！"
+                echo "分支/TAG：${branch}"
+                echo "Docker 运行命令：${params.docker_run}"
+                echo "目标主机：${params.hosts}"
+                echo "版本信息: ${params.buildVersion}"
+            }
+        }
+        stage('Check Image') {
+            when {
+                expression {params.image != ""}
+            }
+            steps {
+                echo("准备构建镜像：${params.image}")
+            }
+        }
+    }
+}

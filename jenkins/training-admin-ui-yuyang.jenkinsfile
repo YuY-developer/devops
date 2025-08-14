@@ -1,0 +1,119 @@
+def getBuildTag() {
+    return new Date().format("MMddHHmmss") + "-${env.BUILD_ID}"
+}
+
+def project_name = "admin3-ui"
+def harbbor = "harbor.labworlds.cc"
+def stage_num = 0
+properties ([
+    parameters ([
+        booleanParam(name: "rendering" , defaultValue: false , description: "是否渲染页面"),
+        choice(name: "deploy_type", choices: ["branch", "tag", "image", "restart"], description: "请选择发布类型"),
+        string(name: "deploy_parameter", defaultValue: "", description: "请输入发布类型对应的参数", trim: true),
+        string(name: "domain", defaultValue: "https://yuyang.admin.labworlds.cc:1443/admin3", description: "请输入后端服务域名"),
+        extendedChoice(name: "hosts", type: "PT_CHECKBOX", value: "192.168.110.137,192.168.110.135", description: "请选择主机"),
+        string(name: "docker_run", defaultValue: "docker run -d -p 9003:80 --restart=always", description: "请输入Docker启动命令")
+    ])
+])
+
+pipeline {
+    agent { node 'node-192.168.110.135-yuyang' }
+    options {
+        buildDiscarder(logRotator(numToKeepStr: '30'))
+        disableConcurrentBuilds()
+        ansiColor('xterm')
+    }
+    environment {
+        new_tag = getBuildTag()
+    }
+    stages {
+        stage ("Git Clone") {
+            when {
+                expression {params.rendering == false && (params.deploy_type == "branch" || params.deploy_type == "tag")}
+            }
+            steps {
+                script {
+                    if (params.deploy_type == "tag") {
+                        checkout ([
+                            $class: "GitSCM",
+                            branches: [[name: "refs/tags/${params.deploy_parameter}"]],
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: [],
+                            userRemoteConfigs: [[
+                                credentialsId: "35ebb72b-6295-42a1-9360-087602619e1b",
+                                url: "git@gitee.com:Y_Yll/admin3.git"
+                            ]]
+                        ])
+                    } else {
+                        git credentialsId: "35ebb72b-6295-42a1-9360-087602619e1b", url: "git@gitee.com:Y_Yll/admin3.git", branch: "${params.deploy_parameter}"
+                    }
+                    // 判断代码是否成功拉取
+                    def result = sh(script: 'test -d .git && echo OK || echo FAIL', returnStdout: true).trim()
+                    if (result == "OK") {
+                        stage_num = 1
+                    } else {
+                        echo "代码拉取失败！！！"
+                    }
+                }
+            }
+        }
+        stage('Env Edit') {
+            when {
+                expression { stage_num == 1 && params.rendering == false && (params.git_branch != "" || params.git_tag != "") }
+            }
+            steps {
+                script {
+                    sh "cd admin3-ui && sed -i 's|^VITE_BASE_URI=.*|VITE_BASE_URI=${params.domain}|' .env"
+                    // 判断域名是否成功替换
+                    def result = sh(script: "cd admin3-ui && grep '^VITE_BASE_URI' < .env | head -n 1", returnStdout: true).trim()
+                    if (result == "VITE_BASE_URI=${params.domain}") {
+                        stage_num = 2
+                    } else {
+                        echo "后端域名替换失败！！！"
+                    }
+                }
+            }
+        }
+        stage ("Build Image") {
+            when {
+                expression {stage_num == 2 && params.rendering == false && (params.deploy_type == "branch" || params.deploy_type == "tag")}
+            }
+            steps {
+                script {
+                    def docker_image_name = "${harbbor}/${project_name}/${params.deploy_parameter}:${env.new_tag}"
+                    sh "cd admin3-ui && docker build -t ${docker_image_name} ."
+                    sh "cd admin3-ui && docker push ${docker_image_name}"
+                    sh "cd admin3-ui && docker rmi ${docker_image_name}"
+                    def status = sh(script: "docker pull ${docker_image_name} > /dev/null 2>&1 && echo '0' || echo '1'", returnStdout: true).trim()
+                    if (status == "0") {
+                        stage_num = 3
+                    } else {
+                        echo "镜像打包上传私库失败！！！"
+                    }
+                }
+            }
+        }
+        stage ("Deploy") {
+            when {
+                expression {params.rendering == false && (params.deploy_type == "restart" || stage_num == 3)}
+            }
+            steps {
+                echo ("===================================")
+                script {
+                    def command = "python3 /home/ubuntu/PyDockerDeploy/deployer.py -p '${project_name}' "
+                    echo ("${command}")
+                    if (params.deploy_type == "branch") {
+                        command += "--git_branch '${params.deploy_parameter}' "
+                    } else if (params.deploy_type == "branch") {
+                        command += "--image_tag '${prams.deploy_parameter}' "
+                    } else if (params.deploy_type == "image") {
+                        command += "--image '${params.deploy_parameter}' "
+                    }
+                    command += "--hosts '${params.hosts}' --harbor_registry '${harbbor}' --docker_run '${params.docker_run}'"
+                    echo ("${command}")
+                    sh command
+                }
+            }
+        }
+    }
+}

@@ -1,0 +1,109 @@
+// docker镜像标签，按照时间-构建编号命名
+def getBuildTag(){
+    return new Date().format('MMddHH') + "-${env.BUILD_ID}"
+}
+// 定义 Pipeline 参数，允许用户在运行时选择拉取代码的分支、标签等信息
+properties([
+    parameters([
+        // 布尔参数：是否要渲染页面，默认值为 false，勾选为 true
+        booleanParam(name: 'rendering', defaultValue: false, description: '是否要渲染页面'),
+        // 字符串参数：输入 Git 分支名称，默认值为 'master'，trim 去除首尾空格
+        string(name: 'git_branch', defaultValue: 'master', description: '请输入代码分支', trim: true),
+        // 字符串参数：输入 Git 标签名称，默认值为空，trim 去除首尾空格
+        string(name: 'git_tag', defaultValue: '', description: '请输入代码TAG', trim: true),
+        // 字符串参数：输入镜像地址，默认值为空，trim 去除首尾空格
+        string(name: 'image', defaultValue: '', description: '请输入完整的镜像地址', trim: true),
+        // 隐藏参数：项目名称，默认值为 'go-starter'，用户不可见也不可修改
+        hidden(name: 'project_name', defaultValue: 'go-starter', description: '隐藏参数不给修改'),
+        // 扩展选择参数：多选主机 IP，支持勾选多个选项，用逗号分隔
+        extendedChoice(
+            name: 'hosts', 
+            type: 'PT_CHECKBOX', 
+            value: '192.168.110.8,192.168.110.171,192.168.110.172', 
+            description: '请选择主机',
+            multiSelectDelimiter: ','
+        ),
+        // 字符串参数：输入 Docker 运行命令，默认值已提供，trim 去除首尾空格
+        string(name: 'docker_run', defaultValue: 'docker run -d -p 9006:8080 --restart=always', description: '请输入Docker运行命令', trim: true),
+    ])
+])
+
+// 定义 Pipeline 主结构
+pipeline {
+    // 指定运行节点：任务在特定 Agent 节点上执行，企业中常指定跳板机
+    agent { node 'node-192.168.110.135-yuyang' }
+    // 设置 Pipeline 选项
+    options {
+        // 保留最近 30 个构建记录，防止日志过多占用空间
+        buildDiscarder(logRotator(numToKeepStr: '30'))
+        // 启用 ANSI 颜色输出，日志显示更美观
+        ansiColor('xterm')
+    }
+    // 定义环境变量，在整个 Pipeline 中都可以使用
+    environment {
+        // 自定义变量：获取构建标签（通常是时间戳或版本号），具体实现可由函数定义
+        images_tag = getBuildTag()
+        // 自定义变量：初始化分支变量，稍后根据参数赋值
+        branch = ""
+    }
+    // 定义 Pipeline 阶段
+    stages {
+        // 阶段 1：Git 克隆代码，只有当分支或标签参数不为空时才执行
+        stage('Git Clone') {
+            when {
+                // 条件表达式：如果 git_branch 或 git_tag 参数有一个不为空，则执行此阶段
+                expression { params.rendering == false && (params.git_branch != "" || params.git_tag != "") }
+            }
+            steps {
+                // 使用脚本块，允许更复杂的逻辑处理
+                script {
+                    // 判断逻辑：如果用户输入了标签（Tag），则拉取指定 Tag 的代码
+                    if (params.git_tag != "") {
+                        // 使用 GitSCM 插件拉取代码，指定 Tag 引用
+                        checkout([$class: 'GitSCM',
+                            // 指定 Tag 路径，格式为 refs/tags/标签名
+                            branches: [[name: "refs/tags/${params.git_tag}"]],
+                            // 不生成子模块配置
+                            doGenerateSubmoduleConfigurations: false,
+                            // 无额外扩展配置
+                            extensions: [],
+                            // 指定 Git 远程仓库信息和凭据
+                            userRemoteConfigs: [[
+                                // 使用之前配置的私钥凭据 ID
+                                credentialsId: 'c4b7f929-0269-4967-b9e3-7d462db21aca',
+                                // 仓库地址，指向 Gitee 上的 go-starter 项目
+                                url: 'git@gitee.com:Tender-Liu/go-starter.git'
+                            ]]
+                        ])
+                        // 将 branch 变量赋值为选择的 Tag，便于后续使用
+                        branch = git_tag
+                    } else {
+                        // 如果未输入 Tag，则拉取指定分支（Branch）的代码
+                        git branch: params.git_branch, 
+                            // 使用之前配置的私钥凭据 ID
+                            credentialsId: 'c4b7f929-0269-4967-b9e3-7d462db21aca', 
+                            // 仓库地址，指向 Gitee 上的 go-starter 项目
+                            url: 'git@gitee.com:Tender-Liu/go-starter.git'
+                        // 将 branch 变量赋值为选择的分支，便于后续使用
+                        branch = git_branch
+                    }
+                }
+            }
+        }
+        // 阶段 2：打印参数信息和测试环境，只有当 rendering 参数为 false 时执行
+        stage('Print String Param') {
+            when {
+                // 条件表达式：如果 rendering 参数为 false，则执行此阶段
+                expression { params.rendering == false }
+            }
+            steps {
+                // 打印用户输入的参数值（假设有 MY_STRING 参数，实际案例中需替换）
+                echo "String 参数值为: ${branch}"
+                // 执行 shell 命令：显示网络配置信息，用于调试
+                sh "ifconfig"
+                // 执行 shell 命令：显示主机名，确认任务运行在哪个节点
+                sh "hostname"
+            }
+        } 
+    }
+}

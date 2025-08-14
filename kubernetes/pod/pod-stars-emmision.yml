@@ -1,0 +1,73 @@
+apiVersion: v1  # 指定 Kubernetes API 的版本
+kind: Pod  # 资源类型，这里是 Pod
+metadata:
+  name: pod-stars-emmision  # Pod 的名称，符合企业标准
+  namespace: yuyang  # 替换为你的 Namespace 名称，例如 zhangwei
+spec:
+  containers:  # 定义 Pod 中的容器
+    - name: stars-emmision  # 容器的名称
+      image: harbor.labworlds.cc/stars-emmision/master:08111109-yuyang  # 替换为你的镜像标签
+      resources: 
+        limits: 
+          cpu: 0.2
+          memory: 256Mi
+        requests: 
+          cpu: 0.1
+          memory: 128Mi
+      ports:  # 指定容器暴露的端口
+        - containerPort: 80  # 容器内部使用的端口号，这里是 80
+      livenessProbe:
+        httpGet:
+          path: /
+          port: 80
+        initialDelaySeconds: 15
+        periodSeconds: 10
+        timeoutSeconds: 2
+        successThreshold: 1
+        failureThreshold: 3
+      readinessProbe:
+        tcpSocket:
+          port: 80
+        initialDelaySeconds: 5
+        periodSeconds: 5
+        timeoutSeconds: 1
+        successThreshold: 1
+        failureThreshold: 3
+      startupProbe:
+        exec:
+          command:
+          - sh
+          - -c
+          - ps aux | grep nginx || ps aux | grep stars
+        initialDelaySeconds: 10
+        periodSeconds: 5
+        timeoutSeconds: 2
+        successThreshold: 1
+        failureThreshold: 30
+      envFrom: 
+        - configMapRef:
+            name: configmap-app-env
+        - secretRef:
+            name: secret-app-env
+      volumeMounts:
+      - name: volume-configmap-app-file
+        mountPath: /app/admin3/application.ymal
+        subPath: application.yaml
+      - name: volume-configmap-app-file
+        mountPath: /etc/nginx/nginx.conf
+        subPath: nginx.conf
+      - name: volume-secret-admin-yuyang-com
+        mountPath: /etc/nginx/ssl/admin.yuyang.com/certificate.crt
+        subPath: tls.crt
+      - name: volume-secret-admin-yuyang-com
+        mountPath: /etc/nginx/ssl/admin.yuyang.com/private.key
+        subPath: tls.key
+  volumes: 
+  - name: volume-configmap-app-file
+    configMap:
+      name: configmap-app-file
+  - name: volume-secret-admin-yuyang-com
+    secret:
+      secretName: secret-admin-yuyang-com
+  imagePullSecrets:  # 指定用于拉取镜像的 Secret
+    - name: secret-harbor-login  # 引用之前创建的 Secret 名称
