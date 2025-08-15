@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: statefulset-redis-not-exist-pvc
+  namespace: yuyang
+  labels:
+    app: statefulset-redis-not-exist-pvc
+    version: "7.4.4"
+spec:
+  selector:
+    matchLabels:
+      app: pod-redis-not-exist-pvc # has to match .spec.template.metadata.labels
+  serviceName: "headless-redis-not-exist-pvc"
+  replicas: 1 # by default is 1
+  template:
+    metadata:
+      labels:
+        app: pod-redis-not-exist-pvc # has to match .spec.selector.matchLabels
+    spec:
+      containers:
+      - name: redis
+        image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:7.4.4
+        ports:
+        - containerPort: 6379
+          name: redis
+        resources:
+          requests:
+            memory: 64Mi
+            cpu: 100m
+          limits:
+            memory: 128Mi
+            cpu: 200m
+        livenessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          exec:
+            command:
+              - redis-cli
+              - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+        volumeMounts:
+        - name: pvc-yuyang
+          mountPath: /data
+      restartPolicy: Always
+  volumeClaimTemplates:
+  - metadata:
+      name: pvc-yuyang
+    spec:
+      accessModes: [ "ReadWriteMany" ]
+      storageClassName: "nfs-client-retain"
+      resources:
+        requests:
+          storage: 64Mi

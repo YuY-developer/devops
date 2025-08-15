@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-yuyang-redis-exist
+  namespace: yuyang
+  labels:
+    app: pvc-yuyang-redis-exist
+spec:
+  storageClassName: ""
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 64Mi

@@ -1,0 +1,68 @@
+apiVersion: apps/v1  # Kubernetes API 版本，apps/v1 是 StatefulSet 的稳定版本
+kind: StatefulSet  # 资源类型，StatefulSet 用于有状态应用的部署
+metadata:  # 元数据部分，包含资源的基本信息
+  name: statefulset-redis-exist-pvc  # StatefulSet 的名称，在命名空间内必须唯一
+  namespace: yuyang  # 部署的命名空间，用于资源隔离
+  labels:  # 标签，用于资源的分类和管理
+    app: redis-exist-pvc  # 应用标签，标识这是 redis-exist-pvc 应用
+    version: "7.4.4"  # 版本标签，标识 Redis 的版本号
+spec:  # StatefulSet 的规格定义
+  serviceName: "headless-redis-exist-pvc"  # 关联的 Headless Service 名称，用于 Pod 间的网络发现
+  replicas: 1  # 副本数量，设置为 1 表示单实例 Redis
+  selector:  # 标签选择器，用于选择要管理的 Pod
+    matchLabels:  # 匹配标签的方式
+      app: pod-redis-exist-pvc  # 必须匹配这个标签的 Pod 才会被此 StatefulSet 管理
+  template:  # Pod 模板，定义创建 Pod 的规格
+    metadata:  # Pod 的元数据
+      labels:  # Pod 的标签，必须包含 selector 中定义的标签
+        app: pod-redis-exist-pvc  # 应用标签，与 selector 匹配
+        version: "7.4.4"  # 版本标签，便于版本管理和监控
+    spec:  # Pod 的规格定义
+      containers:  # 容器列表，定义 Pod 中运行的容器
+      - name: redis  # 容器名称，在 Pod 内必须唯一
+        image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/redis:7.4.4  # 容器镜像，使用华为云镜像仓库的 Redis 7.4.4
+        ports:  # 容器暴露的端口列表
+        - containerPort: 6379  # Redis 服务的默认端口
+          name: redis  # 端口的名称，便于 Service 引用
+        
+        # 资源限制和请求配置，用于资源管理和调度
+        resources:
+          requests:  # 资源请求，容器启动时保证分配的最小资源
+            memory: "64Mi"  # 内存请求 64MB，Kubernetes 调度器会保证至少分配这么多内存
+            cpu: "100m"  # CPU 请求 0.1 核心，保证最小的 CPU 资源
+          limits:  # 资源限制，容器可以使用的最大资源
+            memory: "128Mi"  # 内存限制 128MB，超过此值容器会被 OOMKilled
+            cpu: "100m"  # CPU 限制 0.1 核心，超过此值会被限流
+        
+        # 存活探针，用于检测容器是否还在正常运行
+        livenessProbe:
+          tcpSocket:  # 使用 TCP 连接检测
+            port: 6379  # 检测 Redis 的 6379 端口是否可连接
+          initialDelaySeconds: 30  # 容器启动后等待 30 秒再开始检测
+          periodSeconds: 10  # 每 10 秒检测一次
+          timeoutSeconds: 5  # 单次检测超时时间 5 秒
+          failureThreshold: 3  # 连续失败 3 次后认为容器不健康，会重启容器
+          successThreshold: 1  # 连续成功 1 次后认为容器恢复健康
+        
+        # 就绪探针，用于检测容器是否准备好接收流量
+        readinessProbe:
+          exec:  # 使用命令执行方式检测
+            command:  # 执行的命令列表
+            - redis-cli  # Redis 客户端命令
+            - ping  # ping 命令，检测 Redis 服务是否响应
+          initialDelaySeconds: 5  # 容器启动后等待 5 秒再开始检测
+          periodSeconds: 5  # 每 5 秒检测一次
+          timeoutSeconds: 3  # 单次检测超时时间 3 秒
+          failureThreshold: 3  # 连续失败 3 次后从 Service 的 Endpoints 中移除
+          successThreshold: 1  # 连续成功 1 次后加入到 Service 的 Endpoints 中
+        # 卷挂载配置，将存储卷挂载到容器内
+        volumeMounts:
+        - name: volume-yuyang-redis-exist-pvc  # 挂载的卷名称，必须在 volumes 中定义
+          mountPath: /data  # 挂载到容器内的路径，Redis 数据默认存储目录
+      # 重启策略，定义容器失败时的重启行为
+      restartPolicy: Always  # 总是重启失败的容器，这是 StatefulSet 的默认和推荐设置
+      # 卷定义，声明 Pod 使用的存储卷
+      volumes:
+      - name: volume-yuyang-redis-exist-pvc  # 卷名称，与 volumeMounts 中的 name 对应
+        persistentVolumeClaim:  # 使用 PVC 作为存储卷
+          claimName: pvc-yuyang-redis-exist  # 引用已存在的 PVC 名称，必须在同一命名空间中

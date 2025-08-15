@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: headless-redis-exist-pvc
+  namespace: yuyang
+spec:
+  selector:
+    app: pod-redis-exist-pvc
+  clusterIP: None
+  ports:
+  - name: redis
+    protocol: TCP
+    port: 6379
+    targetPort: 6379

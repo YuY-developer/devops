@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: pvc-yuyang-nfs-client-retain
+  namespace: yuyang
+  labels:
+    app: pvc-yuyang-nfs-client-retain
+spec:
+  storageClassName: nfs-client-retain
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 64Mi
