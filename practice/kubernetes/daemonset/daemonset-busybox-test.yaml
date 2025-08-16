@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: daemonset-busybox-test
+  namespace: yuyang
+  labels:
+    app: daemonset-busybox-test
+spec:
+  selector:
+    matchLabels:
+      app: pod-busybox-test
+  template:
+    metadata:
+      labels:
+        app: pod-busybox-test
+    spec:
+      containers:
+      - name: busybox
+        image: swr.cn-north-4.myhuaweicloud.com/ddn-k8s/docker.io/library/busybox:1.28.4
+        command: ['sh', '-c', 'echo "Running on $(hostname)" && sleep 3600']
+        resources:
+          limits:
+            cpu: 50m
+            memory: 32Mi
+          requests:
+            cpu: 20m
+            memory: 16Mi

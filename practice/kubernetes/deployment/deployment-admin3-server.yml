@@ -8,7 +8,7 @@ metadata:
 spec:
   selector:
     matchLabels:
-      app: deployment-admin3-server
+      app: pod-admin3-server
   replicas: 1
   strategy:
     rollingUpdate:
@@ -18,14 +18,27 @@ spec:
   template:
     metadata:
       labels:
-        app:  deployment-admin3-server
+        app:  pod-admin3-server
     spec:
-      # initContainers:
-        # Init containers are exactly like regular containers, except:
-          # - Init containers always run to completion.
-          # - Each init container must complete successfully before the next one starts.
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: pod-admin3-server
+              topologyKey: "kubernetes.io/hostname"
+        podAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: pod-admin3-ui
+              topologyKey: "kubernetes.io/hostname"
       containers:
-      - name:  deployment-admin3-server
+      - name:  pod-admin3-server
         image:  harbor.labworlds.cc/admin3-server/master:08121853-yuyang
         resources:
           requests:
@@ -60,9 +73,9 @@ spec:
       volumes:
         - name: volume-configmap-admin3-server
           configMap:
-            name: configmap-admin3-server
+            name: configmap-admin3-ui-server
       restartPolicy: Always
       imagePullSecrets:
         - name: secret-harbor-login
-      # nodeSelector:
-      #   kubernetes.io/hostname: k8s-node-yy-137
+      nodeSelector:
+        kubernetes.io/hostname: k8s-node-yy-137
