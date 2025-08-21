@@ -29,8 +29,13 @@ spec:                # Deployment 的规格定义，描述期望的状态
       #           operator: In       # 操作符，表示值在列表中
       #           values:
       #           - yuyang         # 匹配值，必须是 yuyang
-      # nodeSelector:
-      #   kubernetes.io/hostname: k8s-node-yy-137
+      nodeSelector:
+        kubernetes.io/hostname: k8s-node-yy-137
+      tolerations:
+      - key: update
+        operator: "Equal"
+        value: "1.30"
+        effect: "NoSchedule"
       containers:    # 容器列表，定义 Pod 中运行的容器
         - image: harbor.labworlds.cc/stars-emmision/master:08121523-yuyang  # 替换为你的镜像标签  # 容器镜像地址和版本
           imagePullPolicy: IfNotPresent  # 镜像拉取策略，若本地有镜像则不拉取

@@ -1,0 +1,41 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: yuyang  # 权限作用的命名空间
+  name: role-yuyang           # 角色的名称
+rules:
+- apiGroups: ["*"]             # 资源所属的 API 组，空字符串表示核心组
+  resources: ["*"]         # 允许操作的资源类型
+  verbs: ["get", "list", "watch", "create", "update", "patch"]  # 允许的操作
+
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: serviceaccount-yuyang  # 服务账户的名称
+  namespace: yuyang  # 服务账户所在的命名空间
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: secret-serviceaccount-yuyang  # Secret 的名称
+  namespace: yuyang  # Secret 所在的命名空间
+  annotations:
+    kubernetes.io/service-account.name:  serviceaccount-yuyang # 关联的服务账户名称
+type: kubernetes.io/service-account-token
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rolebinding-yuyang           # 绑定的名称
+  namespace: yuyang    # 绑定生效的命名空间
+subjects:
+- kind: ServiceAccount                   # 主体类型，可以是 User、Group 或 ServiceAccount
+  name: serviceaccount-yuyang            # 主体的名称
+  namespace: yuyang
+roleRef:
+  kind: Role                   # 绑定的角色类型（Role 或 ClusterRole）
+  name: role-yuyang            # 绑定的角色名称
+  apiGroup: rbac.authorization.k8s.io

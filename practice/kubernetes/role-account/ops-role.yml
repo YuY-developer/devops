@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: serviceaccount-ops-yuyang
+  namespace: kube-system
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: serviceaccount-ops-yuyang-token
+  namespace: kube-system
+  annotations:
+    kubernetes.io/service-account.name: ops-shiqi-user  # 关联的服务账户名称
+type: kubernetes.io/service-account-token
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: clusterrole-ops-yuyang
+rules:
+- apiGroups: ["*"]  # 所有 API 组
+  resources: ["*"]   # 所有资源类型
+  verbs: ["get", "list", "watch", "create", "update", "patch"]  # 允许查看和修改，但不包括删除
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: clusterrolebinding-ops-yuyang
+subjects:
+- kind: ServiceAccount
+  name: serviceaccount-ops-yuyang
+  namespace: kube-system
+roleRef:
+  kind: ClusterRole
+  name: clusterrole-ops-yuyang
+  apiGroup: rbac.authorization.k8s.io

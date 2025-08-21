@@ -1,0 +1,44 @@
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: yuyang  # 权限作用的命名空间
+  name: dev-role           # 角色的名称
+rules:
+- apiGroups: ["*"]             # 资源所属的 API 组，空字符串表示核心组
+  resources: ["*"]         # 允许操作的资源类型
+  verbs: ["*"]  # 允许的操作
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: dev-user
+  namespace: yuyang
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dev-user-token
+  namespace: yuyang
+  annotations:
+    kubernetes.io/service-account.name: dev-user  # 关联的服务账户名称
+type: kubernetes.io/service-account-token
+
+---
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dev-role-binding
+  namespace: yuyang
+subjects:
+- kind: ServiceAccount
+  name: dev-user
+  namespace: yuyang
+roleRef:
+  kind: Role
+  name: dev-role
+  apiGroup: rbac.authorization.k8s.io
