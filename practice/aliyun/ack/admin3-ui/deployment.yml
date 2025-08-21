@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  deployment-admin3-ui
+  namespace: yuyang
+  labels:
+    app:  deployment-admin3-ui
+spec:
+  selector:
+    matchLabels:
+      app: pod-admin3-ui
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  pod-admin3-ui
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: pod-admin3-ui
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name:  pod-admin3-ui
+        image: yydsops-harbor.labworlds.cc/admin3-ui/master:yuyang-08211704
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+        livenessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        ports:
+        - containerPort:  80
+          name:  http
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: secret-harbor-login

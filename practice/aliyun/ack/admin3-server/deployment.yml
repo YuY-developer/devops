@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  deployment-admin3-server
+  namespace: yuyang
+  labels:
+    app:  deployment-admin3-server
+spec:
+  selector:
+    matchLabels:
+      app: pod-admin3-server
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  pod-admin3-server
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: pod-admin3-server
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name:  pod-admin3-server
+        image: yydsops-harbor.labworlds.cc/admin3-server/master:yuyang-08211708
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          tcpSocket:
+            port: 8080
+          initialDelaySeconds: 69
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /admin3/actuator/health
+            port: 8080
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        ports:
+        - containerPort:  8080
+          name:  http
+        volumeMounts:
+        - name: volume-configmap-admin3-ui-server
+          mountPath: /app/application.yml
+          subPath: application.yaml
+      volumes:
+        - name: volume-configmap-admin3-ui-server
+          configMap:
+            name: configmap-admin3-ui-server
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: secret-harbor-login

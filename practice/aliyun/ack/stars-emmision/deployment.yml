@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  deployment-stars-emmision
+  namespace: yuyang
+  labels:
+    app:  deployment-stars-emmision
+spec:
+  selector:
+    matchLabels:
+      app: pod-stars-emmision
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  pod-stars-emmision
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: pod-stars-emmision
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name:  pod-stars-emmision
+        image: yydsops-harbor.labworlds.cc/stars-emmision/master:yuyang-08211718
+        resources:
+          requests:
+            cpu: 100m
+            memory: 64Mi
+          limits:
+            cpu: 200m
+            memory: 128Mi
+        livenessProbe:
+          tcpSocket:
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        ports:
+        - containerPort:  80
+          name:  http
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: secret-harbor-login
