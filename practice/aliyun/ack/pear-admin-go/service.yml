@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-pear-admin-go
+  namespace: yuyang
+spec:
+  selector:
+    app: pod-pear-admin-go
+  type: ClusterIP
+  sessionAffinity: None
+  sessionAffinityConfig:
+    clientIP:
+      timeoutSeconds: 10800
+  ports:
+  - name: http
+    protocol: TCP
+    port: 8009
+    targetPort: 8009

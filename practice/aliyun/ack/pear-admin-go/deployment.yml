@@ -1,0 +1,72 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name:  deployment-pear-admin-go
+  namespace: yuyang
+  labels:
+    app:  deployment-pear-admin-go
+spec:
+  selector:
+    matchLabels:
+      app: pod-pear-admin-go
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app:  pod-pear-admin-go
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchLabels:
+                  app: pod-pear-admin-go
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name:  pod-pear-admin-go
+        image: yydsops-harbor.labworlds.cc/pear-admin-go/master:yuyang-08221620
+        resources:
+          requests:
+            cpu: 500m
+            memory: 512Mi
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+        livenessProbe:
+          tcpSocket:
+            port: 8009
+          initialDelaySeconds: 69
+          timeoutSeconds: 5
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8009
+          initialDelaySeconds: 5
+          timeoutSeconds: 2
+          successThreshold: 1
+          failureThreshold: 3
+          periodSeconds: 10
+        ports:
+        - containerPort:  8009
+          name:  http
+        volumeMounts:
+        - name: volume-configmap-pear-admin-go
+          mountPath: /app/config.toml
+          subPath: config.toml
+      volumes:
+        - name: volume-configmap-pear-admin-go
+          configMap:
+            name: configmap-pear-admin-go
+      restartPolicy: Always
+      imagePullSecrets:
+        - name: secret-harbor-login

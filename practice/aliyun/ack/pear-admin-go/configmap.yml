@@ -1,0 +1,39 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: configmap-pear-admin-go
+  namespace: yuyang
+data:
+  config.toml: |
+    # 数据库配置 以下 两者任选其一 不要同时使用
+    # sqlite
+    #[db]
+    #DBType = "sqlite"
+    #DBName = "pear-admin"
+
+    # mysql
+    [db]
+    DBType = "mysql"
+    DBName = "pear-admin"
+    DBUser = "root"
+    DBPwd = "LTAI5tNpiDS7kE"
+    DBHost = "rm-6weu8ec8e7k08pif9.mysql.japan.rds.aliyuncs.com:3306"
+
+    # redis配置
+    [redis]
+    RedisAddr = "r-6we41vrebk0fr5nsak.redis.japan.rds.aliyuncs.com"
+    RedisPWD = "LTAI5tNpiDS7kE"
+    RedisDB = 0
+
+    # 日志配置
+    [zaplog]
+    director = 'runtime/log'
+
+    # 其他杂项配置
+    [app]
+    HttpPort = 8009
+    PageSize = 20
+    RunMode = "debug"
+    JwtSecret = "0102$%#&*^*&150405"
+    ImgSavePath = "static/upload"
+    ImgUrlPath = "runtime/upload/images"
