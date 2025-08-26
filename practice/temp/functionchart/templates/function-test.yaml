@@ -1,0 +1,10 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: configmap-function-test
+  namespace: {{ .Values.namespace }}
+data:
+  quote: {{ quote .Values.key1}}
+  squote: {{ squote .Values.key2 }}
+  upper: {{ .Values.key1 | upper | quote }}
+  lower: {{ .Values.key2 | lower | squote }}
